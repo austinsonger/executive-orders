@@ -28,7 +28,9 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run scraper
-      run: python scrape_historical_orders.py
+      run: |
+        cd /home/runner/work/trumporders
+        python scrape_historical_orders.py
         
     - name: Commit and push if changes
       run: |
