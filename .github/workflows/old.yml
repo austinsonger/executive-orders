@@ -29,7 +29,6 @@ jobs:
         
     - name: Run scraper
       run: |
-        cd /home/runner/work/trumporders
         python scrape_historical_orders.py
         
     - name: Commit and push if changes
