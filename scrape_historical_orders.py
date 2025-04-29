@@ -314,10 +314,11 @@ def save_as_markdown(order, content):
     # Create directory path using the date
     dir_path = create_markdown_dir(order['date'])
     
-    # Create filename from date and EO number/title
+    # Create filename from date, EO number, and sanitized title
     date_str = order['date'].strftime('%Y-%m-%d')
     if order.get('eo_number'):
-        filename = f"{date_str}-executive-order-{order['eo_number']}.md"
+        clean_title = clean_filename(order['title'])
+        filename = f"{date_str}-executive-order-{order['eo_number']}-{clean_title}.md"
     else:
         clean_title = clean_filename(order['title'])
         filename = f"{date_str}-{clean_title}.md"
