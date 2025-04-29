@@ -11,7 +11,6 @@ import sys
 from urllib.parse import urljoin
 
 PRESIDENTS = [
-    "george-w-bush",
     "barack-obama",
     "donald-trump",
     "joe-biden"
