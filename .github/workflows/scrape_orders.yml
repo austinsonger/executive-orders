@@ -28,7 +28,7 @@ jobs:
         
     - name: Run scraper
       run: |
-        python scrape_orders_new.py
+        python scrape_new_orders.py
        
     - name: Commit and push if changes
       run: |
