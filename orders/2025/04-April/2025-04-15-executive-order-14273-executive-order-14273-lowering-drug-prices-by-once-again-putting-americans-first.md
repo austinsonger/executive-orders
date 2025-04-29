@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06837
 - Executive Order Number: 14273
-- Citation: N/A
+- Citation: 90 FR 16441
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/18/2025-06837/lowering-drug-prices-by-once-again-putting-americans-first)

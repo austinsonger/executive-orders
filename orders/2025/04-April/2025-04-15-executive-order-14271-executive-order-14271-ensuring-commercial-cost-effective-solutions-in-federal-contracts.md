@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06835
 - Executive Order Number: 14271
-- Citation: N/A
+- Citation: 90 FR 16433
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/18/2025-06835/ensuring-commercial-cost-effective-solutions-in-federal-contracts)

@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-05908
 - Executive Order Number: 14255
-- Citation: N/A
+- Citation: 90 FR 14701
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/03/2025-05908/establishing-the-united-states-investment-accelerator)

@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07378
 - Executive Order Number: 14281
-- Citation: N/A
+- Citation: 90 FR 17537
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07378/restoring-equality-of-opportunity-and-meritocracy)
