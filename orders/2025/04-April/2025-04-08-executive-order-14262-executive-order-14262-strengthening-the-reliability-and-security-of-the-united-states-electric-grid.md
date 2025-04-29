@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06381
 - Executive Order Number: 14262
-- Citation: 90 FR 15521
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/14/2025-06381/strengthening-the-reliability-and-security-of-the-united-states-electric-grid)

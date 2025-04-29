@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06458
 - Executive Order Number: 14263
-- Citation: 90 FR 15615
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06458/addressing-risks-from-susman-godfrey)

@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06462
 - Executive Order Number: 14266
-- Citation: 90 FR 15625
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06462/modifying-reciprocal-tariff-rates-to-reflect-trading-partner-retaliation-and-alignment)

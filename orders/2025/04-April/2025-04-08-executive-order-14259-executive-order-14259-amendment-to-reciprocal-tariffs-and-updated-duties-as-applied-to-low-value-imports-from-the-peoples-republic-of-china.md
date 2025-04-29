@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06378
 - Executive Order Number: 14259
-- Citation: 90 FR 15509
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/14/2025-06378/amendment-to-reciprocal-tariffs-and-updated-duties-as-applied-to-low-value-imports-from-the-peoples)

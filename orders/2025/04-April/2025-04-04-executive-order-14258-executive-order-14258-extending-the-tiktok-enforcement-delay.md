@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06162
 - Executive Order Number: 14258
-- Citation: 90 FR 15209
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/09/2025-06162/extending-the-tiktok-enforcement-delay)

@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06463
 - Executive Order Number: 14267
-- Citation: 90 FR 15629
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06463/reducing-anti-competitive-regulatory-barriers)

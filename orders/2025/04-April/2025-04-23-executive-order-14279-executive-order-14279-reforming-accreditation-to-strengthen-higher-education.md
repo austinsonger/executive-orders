@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07376
 - Executive Order Number: 14279
-- Citation: 90 FR 17529
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07376/reforming-accreditation-to-strengthen-higher-education)

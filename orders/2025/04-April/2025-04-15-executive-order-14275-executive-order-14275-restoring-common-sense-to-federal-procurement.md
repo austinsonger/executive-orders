@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06839
 - Executive Order Number: 14275
-- Citation: 90 FR 16447
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/18/2025-06839/restoring-common-sense-to-federal-procurement)

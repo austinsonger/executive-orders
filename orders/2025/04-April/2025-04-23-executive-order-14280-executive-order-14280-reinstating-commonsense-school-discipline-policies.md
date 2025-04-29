@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07377
 - Executive Order Number: 14280
-- Citation: 90 FR 17533
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07377/reinstating-commonsense-school-discipline-policies)

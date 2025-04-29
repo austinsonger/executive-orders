@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07379
 - Executive Order Number: 14282
-- Citation: 90 FR 17541
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07379/transparency-regarding-foreign-influence-at-american-universities)

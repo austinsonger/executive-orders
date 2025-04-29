@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06461
 - Executive Order Number: 14265
-- Citation: 90 FR 15621
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06461/modernizing-defense-acquisitions-and-spurring-innovation-in-the-defense-industrial-base)

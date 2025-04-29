@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07470
 - Executive Order Number: 14285
-- Citation: 90 FR 17735
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/29/2025-07470/unleashing-americas-offshore-critical-minerals-and-resources)

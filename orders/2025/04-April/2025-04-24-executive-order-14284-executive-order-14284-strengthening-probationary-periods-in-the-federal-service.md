@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07469
 - Executive Order Number: 14284
-- Citation: 90 FR 17729
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/29/2025-07469/strengthening-probationary-periods-in-the-federal-service)

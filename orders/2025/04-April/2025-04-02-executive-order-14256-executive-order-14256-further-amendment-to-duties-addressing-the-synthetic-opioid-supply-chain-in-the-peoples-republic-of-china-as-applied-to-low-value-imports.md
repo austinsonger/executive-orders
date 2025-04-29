@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06027
 - Executive Order Number: 14256
-- Citation: 90 FR 14899
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/07/2025-06027/further-amendment-to-duties-addressing-the-synthetic-opioid-supply-chain-in-the-peoples-republic-of)

@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06380
 - Executive Order Number: 14261
-- Citation: 90 FR 15517
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/14/2025-06380/reinvigorating-americas-beautiful-clean-coal-industry-and-amending-executive-order-14241)

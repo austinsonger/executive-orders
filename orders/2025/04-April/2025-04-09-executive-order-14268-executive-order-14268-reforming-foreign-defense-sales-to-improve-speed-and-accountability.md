@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06464
 - Executive Order Number: 14268
-- Citation: 90 FR 15631
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06464/reforming-foreign-defense-sales-to-improve-speed-and-accountability)

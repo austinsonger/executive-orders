@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06466
 - Executive Order Number: 14270
-- Citation: 90 FR 15643
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06466/zero-based-regulatory-budgeting-to-unleash-american-energy)

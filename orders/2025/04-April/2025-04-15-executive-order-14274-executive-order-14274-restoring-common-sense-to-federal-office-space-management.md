@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06838
 - Executive Order Number: 14274
-- Citation: 90 FR 16445
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/18/2025-06838/restoring-common-sense-to-federal-office-space-management)

@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06465
 - Executive Order Number: 14269
-- Citation: 90 FR 15635
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06465/restoring-americas-maritime-dominance)

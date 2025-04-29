@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06836
 - Executive Order Number: 14272
-- Citation: 90 FR 16437
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/18/2025-06836/ensuring-national-security-and-economic-resilience-through-section-232-actions-on-processed-critical)

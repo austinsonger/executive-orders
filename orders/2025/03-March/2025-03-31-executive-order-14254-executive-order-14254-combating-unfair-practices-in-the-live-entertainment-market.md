@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-05906
 - Executive Order Number: 14254
-- Citation: 90 FR 14699
+- Citation: N/A
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/03/2025-05906/combating-unfair-practices-in-the-live-entertainment-market)
