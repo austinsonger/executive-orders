@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06379
 - Executive Order Number: 14260
-- Citation: N/A
+- Citation: 90 FR 15513
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/14/2025-06379/protecting-american-energy-from-state-overreach)

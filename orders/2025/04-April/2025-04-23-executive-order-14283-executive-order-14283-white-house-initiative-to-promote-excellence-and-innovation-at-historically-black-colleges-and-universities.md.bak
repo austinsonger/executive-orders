@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07380
 - Executive Order Number: 14283
-- Citation: N/A
+- Citation: 90 FR 17543
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07380/white-house-initiative-to-promote-excellence-and-innovation-at-historically-black-colleges-and)

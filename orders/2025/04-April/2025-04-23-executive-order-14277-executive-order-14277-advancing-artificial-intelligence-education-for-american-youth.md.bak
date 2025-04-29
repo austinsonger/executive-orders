@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07368
 - Executive Order Number: 14277
-- Citation: N/A
+- Citation: 90 FR 17519
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07368/advancing-artificial-intelligence-education-for-american-youth)

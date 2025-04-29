@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07062
 - Executive Order Number: 14276
-- Citation: N/A
+- Citation: 90 FR 16993
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/22/2025-07062/restoring-american-seafood-competitiveness)

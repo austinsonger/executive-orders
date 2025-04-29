@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06459
 - Executive Order Number: 14264
-- Citation: N/A
+- Citation: 90 FR 15619
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/15/2025-06459/maintaining-acceptable-water-pressure-in-showerheads)

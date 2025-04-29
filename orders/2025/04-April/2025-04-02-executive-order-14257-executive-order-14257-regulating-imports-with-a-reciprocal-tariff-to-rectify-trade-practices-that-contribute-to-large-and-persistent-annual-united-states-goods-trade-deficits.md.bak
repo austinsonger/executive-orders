@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-06063
 - Executive Order Number: 14257
-- Citation: N/A
+- Citation: 90 FR 15041
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/07/2025-06063/regulating-imports-with-a-reciprocal-tariff-to-rectify-trade-practices-that-contribute-to-large-and)

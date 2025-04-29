@@ -7,7 +7,7 @@
 **Document Details:**
 - Document Number: 2025-07369
 - Executive Order Number: 14278
-- Citation: N/A
+- Citation: 90 FR 17525
 
 ## Sources
 - [Federal Register](https://www.federalregister.gov/documents/2025/04/28/2025-07369/preparing-americans-for-high-paying-skilled-trade-jobs-of-the-future)
