@@ -4,9 +4,7 @@ on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger
-  push:
-    branches:
-      - main  # Run on push to main branch for initial setup
+
 
 permissions:
   contents: write  # Required for pushing changes
@@ -29,8 +27,9 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run scraper
-      run: python scrape_orders_new.py
-        
+      run: |
+        python scrape_orders_new.py
+       
     - name: Commit and push if changes
       run: |
         git config --local user.email "actions@github.com"
