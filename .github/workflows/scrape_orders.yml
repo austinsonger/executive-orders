@@ -33,7 +33,7 @@ jobs:
     - name: Update README with current date
       run: |
         current_date=$(date +"%Y-%m-%d")
-        sed -i "s/`UPDATED ON:[^`]*`/`UPDATED ON:$current_date`/" README.md
+        sed -i 's/`UPDATED ON:[^`]*`/`UPDATED ON:'"$current_date"'`/' README.md
         git add README.md
 
     - name: Commit and push if changes
