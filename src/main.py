@@ -1,7 +1,8 @@
-# Main script for scraping new executive orders
+# Updated the main script to integrate all modularized components
 from src.api import fetch_all_pages, get_xml_content
 from src.utils import create_markdown_dir, clean_filename, get_headers
 from src.formatting import format_content
+
 from datetime import datetime, timedelta
 from dateutil import parser
 import os

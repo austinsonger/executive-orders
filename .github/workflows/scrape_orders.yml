@@ -29,10 +29,15 @@ jobs:
     - name: Run scraper
       run: |
         python scrape_new_orders.py
-       
+
+    - name: Update README with current date
+      run: |
+        current_date=$(date +"%Y-%m-%d")
+        sed -i "s/`UPDATED ON:[^`]*`/`UPDATED ON:$current_date`/" README.md
+        git add README.md
+
     - name: Commit and push if changes
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
-        git add orders/
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update executive orders" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update executive orders and README date" && git push)

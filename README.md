@@ -1,10 +1,13 @@
+`UPDATED ON:YYYY-MMM-DD` 
+
 # Executive Orders Scraper
 
-An automated tool that scrapes executive orders from the White House website and archives them as markdown files. The scraper runs daily using GitHub Actions to maintain an up-to-date archive of executive orders.
+
+An automated tool that scrapes executive orders from the Federal Register and archives them as markdown files. The scraper runs daily using GitHub Actions to maintain an up-to-date archive of executive orders.
 
 ## Features
 
-- Automatically scrapes executive orders from whitehouse.gov
+- Automatically scrapes executive orders from Federal Register
 - Converts orders into clean markdown format
 - Organizes orders by year in separate directories
 - Runs daily via GitHub Actions
@@ -66,6 +69,3 @@ The project includes a GitHub Actions workflow that:
 - `orders/` - Directory containing archived orders (organized by year)
 - `.github/workflows/` - GitHub Actions workflow configuration
 
-## License
-
-[Add your chosen license here]
