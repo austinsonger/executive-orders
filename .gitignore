@@ -3,7 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-debug/
+/workspaces/trumporders/.debug/
+
+.debug
 
 # C extensions
 *.so
