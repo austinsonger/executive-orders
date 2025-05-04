@@ -12,13 +12,17 @@ from urllib.parse import urljoin
 
 LAST_CHECK_FILE = 'last_check.txt'
 
-def create_markdown_dir(date):
-    """Create directory for the year and month if they don't exist"""
+def create_markdown_dir(date, president_name):
+    """Create directory for the president, year, and month if they don't exist"""
+    base_dir = "Presidential_Executive_Orders"  # Base directory
+    president_dir = f"{base_dir}/{president_name}"  # Directory for the president
     year = date.year
     month = date.strftime('%m-%B')  # e.g., "01-January"
-    year_dir = f"orders/{year}"
+    year_dir = f"{president_dir}/{year}"
     month_dir = f"{year_dir}/{month}"
     
+    if not os.path.exists(president_dir):
+        os.makedirs(president_dir)
     if not os.path.exists(year_dir):
         os.makedirs(year_dir)
     if not os.path.exists(month_dir):
@@ -315,7 +319,7 @@ By the authority\1:''', formatted)
 def save_as_markdown(order, content):
     """Save the executive order as a markdown file without creating backups."""
     # Create directory path using the date
-    dir_path = create_markdown_dir(order['date'])
+    dir_path = create_markdown_dir(order['date'], "President_Name")  # Replace "President_Name" with actual president's name
 
     # Create filename from date, EO number, and sanitized title
     date_str = order['date'].strftime('%Y-%m-%d')
@@ -367,23 +371,21 @@ def save_as_markdown(order, content):
         return False
 
 def check_new_orders():
-    """Check for new executive orders since the last check."""
-    print("Starting nightly check for new executive orders...")
+    """Check for new executive orders and process them."""
+    print("Starting check for new executive orders...")
 
-    # Retrieve the last check time
-    last_check_time = datetime.now() - timedelta(days=1)
-    if os.path.exists(LAST_CHECK_FILE):
-        with open(LAST_CHECK_FILE, 'r') as f:
-            last_check_time = datetime.fromisoformat(f.read().strip())
-
-    print(f"Last check was at: {last_check_time}")
+    # Calculate the start and end dates for the past 7 days
+    today = datetime.now()
+    start_date = today - timedelta(days=7)  # 7 days ago
+    end_date = today  # Current date and time
+    print(f"Fetching orders from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
 
     # Parameters for the Federal Register API
     params = {
         'conditions[correction]': '0',
         'conditions[presidential_document_type]': 'executive_order',
-        'conditions[signing_date][gte]': last_check_time.strftime('%m/%d/%Y'),
-        'conditions[signing_date][lte]': datetime.now().strftime('%m/%d/%Y'),
+        'conditions[signing_date][gte]': start_date.strftime('%m/%d/%Y'),
+        'conditions[signing_date][lte]': end_date.strftime('%m/%d/%Y'),
         'conditions[type][]': 'PRESDOCU',
         'fields[]': [
             'citation',
@@ -413,7 +415,7 @@ def check_new_orders():
 
     # Fetch new orders
     results = fetch_all_pages("https://www.federalregister.gov/api/v1/documents", params)
-    print(f"Found {len(results)} new orders.")
+    print(f"Found {len(results)} total orders.")
 
     # Process each new order
     for result in results:
@@ -444,20 +446,59 @@ def check_new_orders():
                 'eo_number': eo_number
             }
 
-            print(f"Processing new order: {title} ({date_str})")
-            content = get_order_content(order)
+            # Check if the file already exists
+            dir_path = create_markdown_dir(order['date'], "President_Name")  # Replace "President_Name" with actual president's name
+            date_str = order['date'].strftime('%Y-%m-%d')
+            clean_title = clean_filename(order['title'])
+            if order.get('eo_number'):
+                filename = f"{date_str}-executive-order-{order['eo_number']}-{clean_title}.md"
+            else:
+                filename = f"{date_str}-{clean_title}.md"
+            filepath = os.path.join(dir_path, filename)
 
+            if os.path.exists(filepath):
+                print(f"Order already exists, skipping: {order['title']} ({order['date']})")
+                continue
+
+            # Fetch and save the order content
+            print(f"Processing new order: {order['title']} ({order['date']})")
+            content = get_order_content(order)
             if content:
                 save_as_markdown(order, content)
 
         except Exception as e:
             print(f"Error processing order: {e}")
 
-    # Update the last check time
-    with open(LAST_CHECK_FILE, 'w') as f:
-        f.write(datetime.now().isoformat())
+    print("Check for new executive orders complete.")
 
-    print("Nightly check complete.")
+def get_president_by_date(date):
+    """Determine the president based on the date of the executive order."""
+    presidents = {
+        ("2025-01-20", "2029-01-20"): "donald-trump",  # Current term
+        ("2021-01-20", "2025-01-20"): "joe-biden",
+        ("2017-01-20", "2021-01-20"): "donald-trump",
+        ("2009-01-20", "2017-01-20"): "barack-obama",
+        ("2001-01-20", "2009-01-20"): "george-w-bush",
+        ("1993-01-20", "2001-01-20"): "bill-clinton",
+        ("1989-01-20", "1993-01-20"): "george-h-w-bush",
+        ("1981-01-20", "1989-01-20"): "ronald-reagan",
+        ("1977-01-20", "1981-01-20"): "jimmy-carter",
+        ("1974-08-09", "1977-01-20"): "gerald-ford",
+        ("1969-01-20", "1974-08-09"): "richard-nixon",
+        ("1963-11-22", "1969-01-20"): "lyndon-b-johnson",
+        ("1961-01-20", "1963-11-22"): "john-f-kennedy",
+        ("1953-01-20", "1961-01-20"): "dwight-d-eisenhower",
+        ("1945-04-12", "1953-01-20"): "harry-s-truman",
+        ("1933-03-04", "1945-04-12"): "franklin-d-roosevelt",
+    }
+    
+    for (start, end), president in presidents.items():
+        start_date = datetime.strptime(start, "%Y-%m-%d")
+        end_date = datetime.strptime(end, "%Y-%m-%d")
+        if start_date <= date < end_date:
+            return president
+    
+    return "unknown-president"  # Default if no match is found
 
 if __name__ == "__main__":
     check_new_orders()
