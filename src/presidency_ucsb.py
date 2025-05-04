@@ -38,18 +38,6 @@ except (ImportError, SystemError):
 UCSB_BASE_URL = "https://www.presidency.ucsb.edu"
 UCSB_SEARCH_URL = f"{UCSB_BASE_URL}/advanced-search"
 
-def get_headers():
-    """Get headers to mimic a browser request"""
-    return {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': UCSB_BASE_URL,
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'max-age=0',
-    }
-
 # --- Added: Configure requests session with retries ---
 def create_session_with_retries(retries=3, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504), timeout=60):
     session = requests.Session()
@@ -75,13 +63,7 @@ REQUESTS_SESSION = create_session_with_retries()
 # The person ID is used in the search URL - UPDATED with correct person IDs from the URLs
 
 PRESIDENTS_UCSB = {
-    # Format: "your-slug": ("UCSB person ID", "start_date", "end_date", "display_name")
-    "ronald-reagan": ("200296", "1981-01-20", "1989-01-20", "Ronald Reagan"),
-    "jimmy-carter": ("200295", "1977-01-20", "1981-01-20", "Jimmy Carter"),
-    "gerald-r-ford": ("200294", "1974-08-09", "1977-01-20", "Gerald R. Ford"),
-    "richard-nixon": ("200293", "1969-01-20", "1974-08-09", "Richard Nixon"),
-    "lyndon-b-johnson": ("200292", "1963-11-22", "1969-01-20", "Lyndon B. Johnson"),
-    "john-f-kennedy": ("200291", "1961-01-20", "1963-11-22", "John F. Kennedy"),
+    # Format: "your-slug": ("UCSB person ID", "start_date", "end_date", "display_name"
     "dwight-d-eisenhower": ("200290", "1953-01-20", "1961-01-20", "Dwight D. Eisenhower"),
     "harry-s-truman": ("200289", "1945-04-12", "1953-01-20", "Harry S. Truman"),
     "franklin-d-roosevelt": ("200288", "1933-03-04", "1945-04-12", "Franklin D. Roosevelt"),
@@ -121,6 +103,18 @@ PRESIDENTS_UCSB = {
 
 
 
+def get_headers():
+    """Get headers to mimic a browser request"""
+    return {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': UCSB_BASE_URL,
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+    }
+
 def fetch_orders_for_page(president_slug, person_id, page=0):
     """
     Fetch a page of executive orders for a specific president from the UCSB Presidency Project.
@@ -153,7 +147,7 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
         response.raise_for_status()
         
         # Save HTML for debugging if needed
-        debug_file = os.path.join("debug", f"ucsb_debug_{president_slug}_page{page}.html")
+        debug_file = f"ucsb_debug_{president_slug}_page{page}.html"
         with open(debug_file, "w", encoding="utf-8") as f:
             f.write(response.text)
         print(f"HTML content saved to {debug_file} for debugging")
@@ -228,7 +222,7 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
                     
                     for pattern in alternate_patterns:
                         eo_match = re.search(pattern, title, re.IGNORECASE)
-                        if (eo_match):
+                        if eo_match:
                             eo_number = eo_match.group(1)
                             break
                 
