@@ -1,6 +1,8 @@
 import os
 import sys
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 import re
 import time
@@ -36,11 +38,32 @@ except (ImportError, SystemError):
 UCSB_BASE_URL = "https://www.presidency.ucsb.edu"
 UCSB_SEARCH_URL = f"{UCSB_BASE_URL}/advanced-search"
 
+# --- Added: Configure requests session with retries ---
+def create_session_with_retries(retries=3, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504), timeout=60):
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    session.headers.update(get_headers()) # Add default headers to the session
+    session.request_timeout = timeout # Default timeout for requests made with this session
+    return session
+
+# Global session object
+REQUESTS_SESSION = create_session_with_retries()
+# --- End Added ---
+
 # Presidents dictionary mapping UCSB person IDs to your folder structure slugs
 # The person ID is used in the search URL - UPDATED with correct person IDs from the URLs
+
 PRESIDENTS_UCSB = {
     # Format: "your-slug": ("UCSB person ID", "start_date", "end_date", "display_name")
-    "george-h-w-bush": ("200297", "1989-01-20", "1993-01-20", "George H.W. Bush"),
     "ronald-reagan": ("200296", "1981-01-20", "1989-01-20", "Ronald Reagan"),
     "jimmy-carter": ("200295", "1977-01-20", "1981-01-20", "Jimmy Carter"),
     "gerald-r-ford": ("200294", "1974-08-09", "1977-01-20", "Gerald R. Ford"),
@@ -50,8 +73,41 @@ PRESIDENTS_UCSB = {
     "dwight-d-eisenhower": ("200290", "1953-01-20", "1961-01-20", "Dwight D. Eisenhower"),
     "harry-s-truman": ("200289", "1945-04-12", "1953-01-20", "Harry S. Truman"),
     "franklin-d-roosevelt": ("200288", "1933-03-04", "1945-04-12", "Franklin D. Roosevelt"),
-    # Later presidents are better fetched from the Federal Register
+    "herbert-hoover": ("200287", "1929-03-04", "1933-03-04", "Herbert Hoover"),
+    "calvin-coolidge": ("200286", "1923-08-02", "1929-03-04", "Calvin Coolidge"),
+    "warren-g-harding": ("200285", "1921-03-04", "1923-08-02", "Warren G. Harding"),
+    "woodrow-wilson": ("200284", "1913-03-04", "1921-03-04", "Woodrow Wilson"),
+    "william-h-taft": ("200283", "1909-03-04", "1913-03-04", "William H. Taft"),
+    "theodore-roosevelt": ("200282", "1901-09-14", "1909-03-04", "Theodore Roosevelt"),
+    "william-mckinley": ("200281", "1897-03-04", "1901-09-14", "William McKinley"),
+    "grover-cleveland-2": ("200280", "1893-03-04", "1897-03-04", "Grover Cleveland (2nd term)"),
+    "benjamin-harrison": ("200279", "1889-03-04", "1893-03-04", "Benjamin Harrison"),
+    "grover-cleveland-1": ("200278", "1885-03-04", "1889-03-04", "Grover Cleveland (1st term)"),
+    "chester-a-arthur": ("200277", "1881-09-19", "1885-03-04", "Chester A. Arthur"),
+    "james-a-garfield": ("200276", "1881-03-04", "1881-09-19", "James A. Garfield"),
+    "rutherford-b-hayes": ("200275", "1877-03-04", "1881-03-04", "Rutherford B. Hayes"),
+    "ulysses-s-grant": ("200274", "1869-03-04", "1877-03-04", "Ulysses S. Grant"),
+    "andrew-johnson": ("200273", "1865-04-15", "1869-03-04", "Andrew Johnson"),
+    "abraham-lincoln": ("200272", "1861-03-04", "1865-04-15", "Abraham Lincoln"),
+    "james-buchanan": ("200271", "1857-03-04", "1861-03-04", "James Buchanan"),
+    "franklin-pierce": ("200270", "1853-03-04", "1857-03-04", "Franklin Pierce"),
+    "millard-fillmore": ("200269", "1850-07-09", "1853-03-04", "Millard Fillmore"),
+    "zachary-taylor": ("200268", "1849-03-04", "1850-07-09", "Zachary Taylor"),
+    "james-k-polk": ("200267", "1845-03-04", "1849-03-04", "James K. Polk"),
+    "john-tyler": ("200266", "1841-04-04", "1845-03-04", "John Tyler"),
+    "william-h-harrison": ("200265", "1841-03-04", "1841-04-04", "William Henry Harrison"),
+    "martin-van-buren": ("200264", "1837-03-04", "1841-03-04", "Martin Van Buren"),
+    "andrew-jackson": ("200263", "1829-03-04", "1837-03-04", "Andrew Jackson"),
+    "john-quincy-adams": ("200262", "1825-03-04", "1829-03-04", "John Quincy Adams"),
+    "james-monroe": ("200261", "1817-03-04", "1825-03-04", "James Monroe"),
+    "james-madison": ("200260", "1809-03-04", "1817-03-04", "James Madison"),
+    "thomas-jefferson": ("200259", "1801-03-04", "1809-03-04", "Thomas Jefferson"),
+    "john-adams": ("200258", "1797-03-04", "1801-03-04", "John Adams"),
+    "george-washington": ("200257", "1789-04-30", "1797-03-04", "George Washington"),
 }
+
+
+
 
 def get_headers():
     """Get headers to mimic a browser request"""
@@ -91,7 +147,9 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
         print(f"Fetching page {page+1} for {president_slug}...")
         print(f"Using URL: {url}")
         
-        response = requests.get(url, headers=get_headers(), timeout=30)
+        # --- Modified: Use session with timeout ---
+        response = REQUESTS_SESSION.get(url, timeout=REQUESTS_SESSION.request_timeout)
+        # --- End Modified ---
         response.raise_for_status()
         
         # Save HTML for debugging if needed
@@ -208,7 +266,9 @@ def get_order_content_ucsb(detail_url):
     """
     try:
         print(f"  - Fetching content from: {detail_url}")
-        response = requests.get(detail_url, headers=get_headers(), timeout=30)
+        # --- Modified: Use session with timeout ---
+        response = REQUESTS_SESSION.get(detail_url, timeout=REQUESTS_SESSION.request_timeout)
+        # --- End Modified ---
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -282,7 +342,9 @@ def get_order_content_ucsb(detail_url):
         
     except Exception as e:
         print(f"  - Error fetching order content: {e}")
-        traceback.print_exc()
+        # Don't print full traceback here for timeouts/retries, just the error
+        if not isinstance(e, (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError)):
+             traceback.print_exc()
         return None
 
 def fetch_all_orders_for_president(president_slug):
