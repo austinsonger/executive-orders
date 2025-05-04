@@ -102,6 +102,10 @@ def save_as_markdown(order, content):
 
 
     filepath = os.path.join(dir_path, filename)
+    # Prevent overwrite if file exists
+    if os.path.exists(filepath):
+        print(f"Skipping save for {order['title']} - file already exists: {filepath}")
+        return False
 
     # Format the content using the imported function
     formatted_content = format_content(content)
