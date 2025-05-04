@@ -38,6 +38,18 @@ except (ImportError, SystemError):
 UCSB_BASE_URL = "https://www.presidency.ucsb.edu"
 UCSB_SEARCH_URL = f"{UCSB_BASE_URL}/advanced-search"
 
+def get_headers():
+    """Get headers to mimic a browser request"""
+    return {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': UCSB_BASE_URL,
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+    }
+
 # --- Added: Configure requests session with retries ---
 def create_session_with_retries(retries=3, backoff_factor=0.5, status_forcelist=(500, 502, 503, 504), timeout=60):
     session = requests.Session()
@@ -108,18 +120,6 @@ PRESIDENTS_UCSB = {
 
 
 
-
-def get_headers():
-    """Get headers to mimic a browser request"""
-    return {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': UCSB_BASE_URL,
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'max-age=0',
-    }
 
 def fetch_orders_for_page(president_slug, person_id, page=0):
     """
@@ -228,7 +228,7 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
                     
                     for pattern in alternate_patterns:
                         eo_match = re.search(pattern, title, re.IGNORECASE)
-                        if eo_match:
+                        if (eo_match):
                             eo_number = eo_match.group(1)
                             break
                 
