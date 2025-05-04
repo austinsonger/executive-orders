@@ -13,7 +13,7 @@ import traceback
 if __name__ == "__main__" and (__package__ is None or __package__ == ''):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)
-    if parent_dir not in sys.path:
+    if (parent_dir not in sys.path):
         sys.path.insert(0, parent_dir)
     __package__ = "src"
 
@@ -80,7 +80,12 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
     orders = []
     
     # Build the search URL with correct parameters based on the provided URLs
-    url = f"{UCSB_SEARCH_URL}?field-keywords=&field-keywords2=&field-keywords3=&from%5Bdate%5D=&to%5Bdate%5D=&person2={person_id}&category2%5B%5D=58&items_per_page=100&page={page}"
+    # Only include page parameter if it's not the first page (page > 0)
+    url = f"{UCSB_SEARCH_URL}?field-keywords=&field-keywords2=&field-keywords3=&from%5Bdate%5D=&to%5Bdate%5D=&person2={person_id}&category2%5B%5D=58&items_per_page=100"
+    
+    # Add page parameter only if not the first page
+    if page > 0:
+        url += f"&page={page}"
     
     try:
         print(f"Fetching page {page+1} for {president_slug}...")
@@ -89,45 +94,66 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
         response = requests.get(url, headers=get_headers(), timeout=30)
         response.raise_for_status()
         
+        # Save HTML for debugging if needed
+        debug_file = f"ucsb_debug_{president_slug}_page{page}.html"
+        with open(debug_file, "w", encoding="utf-8") as f:
+            f.write(response.text)
+        print(f"HTML content saved to {debug_file} for debugging")
+        
         soup = BeautifulSoup(response.content, 'html.parser')
         
         # Debug: Print the title to make sure we're getting a search results page
         page_title = soup.title.text if soup.title else 'No title'
         print(f"Page title: {page_title}")
         
-        # Find search results - use the view-content class which contains the results
-        results = soup.select('div.view-content div.views-row')
+        # Look for the results table - UCSB uses a table to display executive orders
+        # This is specific to the table format seen in the debug HTML
+        results_table = soup.select_one('table.views-table')
         
-        if not results:
-            print("No results found on this page.")
+        if not results_table:
+            print("No results table found on this page.")
             return []
         
-        print(f"Found {len(results)} results on page {page+1}")
-            
-        for result in results:
+        # Get all rows from the table body
+        rows = results_table.select('tbody tr')
+        
+        if not rows:
+            print("No result rows found in the table.")
+            return []
+        
+        print(f"Found {len(rows)} results on page {page+1}")
+        
+        for row in rows:
             try:
-                # Extract title and link - adjust selectors based on examining the HTML
-                title_elem = result.select_one('h3.field-content a')
-                if not title_elem:
+                # Extract cells from the row - should have date, person, and title
+                cells = row.select('td')
+                
+                if len(cells) < 3:
+                    print(f"  - Skipping row with insufficient cells: {len(cells)}")
                     continue
                 
-                title = title_elem.text.strip()
-                detail_url = title_elem['href']
-                if not detail_url.startswith('http'):
-                    detail_url = f"{UCSB_BASE_URL}{detail_url}"
-                
-                # Extract date - looks for the date display class
-                date_elem = result.select_one('div.date-display-single')
-                if not date_elem:
-                    print(f"  - Warning: No date found for '{title}'")
-                    continue
-                
-                date_text = date_elem.text.strip()
+                # Extract date from the first cell
+                date_cell = cells[0]
+                date_text = date_cell.get_text(strip=True)
                 try:
                     date_obj = parser.parse(date_text)
-                except:
-                    print(f"  - Warning: Could not parse date '{date_text}' for '{title}'")
+                except Exception as e:
+                    print(f"  - Error parsing date '{date_text}': {e}")
                     continue
+                
+                # Extract title and link from the third cell
+                title_cell = cells[2]
+                title_link = title_cell.select_one('a')
+                
+                if not title_link:
+                    print("  - No title link found in row")
+                    continue
+                
+                title = title_link.get_text(strip=True)
+                detail_url = title_link['href']
+                
+                if not detail_url.startswith('http'):
+                    detail_url = f"{UCSB_BASE_URL}{detail_url}"
                 
                 # Extract EO number from title
                 eo_number = None
@@ -136,9 +162,17 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
                     eo_number = eo_match.group(1)
                 else:
                     # Try alternate formats
-                    eo_match = re.search(r'(?:EO|E\.O\.) (?:Number )?(\d+)', title, re.IGNORECASE)
-                    if eo_match:
-                        eo_number = eo_match.group(1)
+                    alternate_patterns = [
+                        r'(?:EO|E\.O\.) (?:Number )?(\d+)',
+                        r'Order (?:No\.|Number) (\d+)',
+                        r'(?:No\.|Number) (\d+)'
+                    ]
+                    
+                    for pattern in alternate_patterns:
+                        eo_match = re.search(pattern, title, re.IGNORECASE)
+                        if eo_match:
+                            eo_number = eo_match.group(1)
+                            break
                 
                 order = {
                     'title': title,
@@ -149,8 +183,10 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
                 
                 print(f"  - Found order: {title} ({date_obj.strftime('%Y-%m-%d')})")
                 orders.append(order)
+                
             except Exception as e:
-                print(f"  - Error processing result: {e}")
+                print(f"  - Error processing row: {e}")
+                traceback.print_exc()
                 continue
         
         return orders
@@ -269,7 +305,12 @@ def fetch_all_orders_for_president(president_slug):
     
     all_orders = []
     page = 0
-    page_count = 0
+    pages_fetched = 0
+    
+    # Initialize counts here to fix scope issues
+    processed_count = 0
+    skipped_count = 0
+    error_count = 0
     
     # Fetch all pages of results
     while True:
@@ -279,16 +320,12 @@ def fetch_all_orders_for_president(president_slug):
             
         all_orders.extend(orders)
         page += 1
-        page_count = page
+        pages_fetched = page
         
         # Be polite to the server
         time.sleep(2)
     
-    print(f"Found {len(all_orders)} total orders across {page_count} pages for {display_name}")
-    
-    processed_count = 0
-    skipped_count = 0
-    error_count = 0
+    print(f"Found {len(all_orders)} total orders across {pages_fetched} pages for {display_name}")
     
     # Process each order
     for order in all_orders:
@@ -296,7 +333,7 @@ def fetch_all_orders_for_president(president_slug):
             # Prepare order data
             title = order['title']
             date_obj = order['date']
-            link = order['link']
+            link = order['link']  # Get the link from the order dictionary
             eo_number = order.get('eo_number')
             
             # Create standard metadata object
