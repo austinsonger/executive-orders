@@ -160,8 +160,10 @@ def fetch_orders_for_page(president_slug, person_id, page=0):
         # --- End Modified ---
         response.raise_for_status()
         
-        # Save HTML for debugging if needed
-        debug_file = f"ucsb_debug_{president_slug}_page{page}.html"
+        # Ensure debug directory exists in project root
+        debug_dir = os.path.join(os.getcwd(), '.debug')
+        os.makedirs(debug_dir, exist_ok=True)
+        debug_file = os.path.join(debug_dir, f"ucsb_debug_{president_slug}_page{page}.html")
         with open(debug_file, "w", encoding="utf-8") as f:
             f.write(response.text)
         print(f"HTML content saved to {debug_file} for debugging")
