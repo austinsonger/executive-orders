@@ -3,6 +3,10 @@ name: Run UCSB Scraper Manually
 on:
   workflow_dispatch: # Allows manual triggering
 
+
+permissions:
+  contents: write  # Required for pushing changes
+
 jobs:
   scrape_ucsb:
     runs-on: ubuntu-latest
@@ -23,3 +27,11 @@ jobs:
 
       - name: Run UCSB Scraper
         run: python src/presidency_ucsb.py
+
+
+
+      - name: Commit and push if changes
+        run: |
+         git config --local user.email "actions@github.com"
+         git config --local user.name "GitHub Actions"
+         git diff --quiet && git diff --staged --quiet || (git commit -m "Update executive orders and README date" && git push)
