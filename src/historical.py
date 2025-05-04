@@ -1,5 +1,5 @@
 import os
-import sys
+import sys # <-- Add sys import
 from datetime import datetime, timedelta
 from dateutil import parser
 import re
@@ -8,15 +8,39 @@ import time
 import requests # <-- Add requests import
 from bs4 import BeautifulSoup # <-- Add BeautifulSoup import
 
-# Assuming src is in PYTHONPATH or running with python -m src.historical
+# --- Adjust sys.path if run directly ---
+# This allows finding the 'src' package and its modules when the script
+# is executed directly (e.g., python src/historical.py) from the project root,
+# or when run as 'python /path/to/src/historical.py'.
+if __name__ == "__main__" and (__package__ is None or __package__ == ''):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(script_dir)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    # Set __package__ to allow relative imports within the package if needed later,
+    # although we'll primarily use absolute imports from src now.
+    __package__ = "src"
+
+# --- Imports ---
+# Try relative imports first (works when run as a module, e.g., python -m src.historical)
 try:
     # Import only necessary functions from other modules
     from .api import fetch_all_pages, get_xml_content, get_headers
     from .utils import create_markdown_dir, clean_filename, save_as_markdown
-except ImportError:
-    # Allow running directly if src is added to path externally
-    from api import fetch_all_pages, get_xml_content, get_headers
-    from utils import create_markdown_dir, clean_filename, save_as_markdown
+    print("Using relative imports.")
+# Fallback to absolute imports from 'src' (works when run as a script after sys.path adjustment)
+except (ImportError, SystemError): # SystemError can occur in some environments
+    try:
+        # Import necessary functions using absolute paths from project root
+        from src.api import fetch_all_pages, get_xml_content, get_headers
+        from src.utils import create_markdown_dir, clean_filename, save_as_markdown
+        print("Using absolute imports from src.")
+    except ImportError as e:
+        print(f"Error importing modules via absolute path: {e}")
+        print("Please ensure the script is run from the project root directory ('/workspaces/trumporders')",
+              "or that the project root directory is in the PYTHONPATH.")
+        sys.exit(1)
+
 
 FEDERAL_REGISTER_API_URL = "https://www.federalregister.gov/api/v1/documents"
 
@@ -35,7 +59,7 @@ PRESIDENTS_TO_FETCH = {
     "franklin-d-roosevelt": ("1933-03-04", "1945-04-12"),
 }
 
-# --- Local Helper Functions (Copied/Adapted to keep changes in this file) ---
+# --- Local Helper Functions (Keep using these local versions) ---
 
 def get_president_by_date_historical(date):
     """Determine the president based on the date - uses API-consistent slugs."""
@@ -76,34 +100,55 @@ def get_html_content_historical(html_url):
     """Fetch and parse HTML content from the Federal Register document page (local version)."""
     try:
         print(f"  - Attempting HTML fallback from: {html_url}")
-        # Uses get_headers imported from api module
+        # Uses get_headers imported via try/except block above
         response = requests.get(html_url, headers=get_headers(), timeout=30)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
-        content_div = soup.find('div', id='document-content')
+
+        # Try multiple selectors, starting with the most likely/modern ones
+        selectors = [
+            'div#document-content',
+            'article',
+            'div.article-content',
+            'div.document-content',
+            'div.full-text-content',
+            'div.document-body',
+            'div#main',             # Added common ID
+            'div.main',             # Added common class
+            'div.content',          # Added common class
+            'main',                 # Added HTML5 main element
+            'td.article',           # Added potential table cell class
+            'table',                # Added generic table check
+            'pre'                   # Check for preformatted text
+        ]
+        content_div = None
+        for selector in selectors:
+            content_div = soup.select_one(selector)
+            if content_div:
+                print(f"  - Found content using selector: '{selector}'")
+                break # Stop searching once found
+
         if not content_div:
-            content_div = soup.find('article')
-            if not content_div:
-                 content_div = soup.find('div', class_='article-content')
-        if not content_div:
-            print("  - HTML Fallback: Could not find main content container.")
-            return None
+            print("  - HTML Fallback: Could not find main content container using known selectors.")
+            return None # Avoid using raw body text for now, too unreliable
+
         full_content = content_div.get_text(separator='\n\n', strip=True)
-        full_content = re.sub(r'\n\s*\n', '\n\n', full_content)
-        full_content = re.sub(r'^\s+', '', full_content, flags=re.MULTILINE)
+        # Clean up extra whitespace that might result from HTML parsing
+        full_content = re.sub(r'\n\s*\n', '\n\n', full_content) # Collapse multiple blank lines
+        full_content = re.sub(r'^\s+', '', full_content, flags=re.MULTILINE) # Remove leading space on lines
         print("  - HTML Fallback successful.")
-        return full_content.strip()
+        return full_content.strip() # Return the cleaned text
     except Exception as e:
         print(f"  - Error fetching/parsing HTML content: {str(e)}")
         return None
 
 def get_order_content_historical(order):
     """Get order content, prioritizing XML, fallback to HTML (local version)."""
-    # Try XML first (uses get_xml_content imported from api module)
+    # Try XML first (uses get_xml_content imported via try/except block above)
     if order.get('xml_url'):
         try:
             print(f"Fetching XML content from: {order['xml_url']}")
-            content = get_xml_content(order['xml_url'])
+            content = get_xml_content(order['xml_url']) # Use imported function
             if content:
                 print("XML content fetched successfully.")
                 return content
@@ -111,14 +156,13 @@ def get_order_content_historical(order):
                 print("XML content fetch returned None.")
         except Exception as e:
             print(f"Error fetching XML content: {e}")
-            # Fall through
+            # Fall through to HTML
 
-    # Fallback to HTML
+    # Fallback to HTML (uses local get_html_content_historical)
     print("XML failed or not available. Trying HTML fallback.")
-    if order.get('link'):
+    if order.get('link'): # Check if 'link' (html_url) exists in the order data
         try:
-            # Uses local get_html_content_historical
-            html_content = get_html_content_historical(order['link'])
+            html_content = get_html_content_historical(order['link']) # Use local function
             if html_content:
                 return html_content
             else:
@@ -126,6 +170,7 @@ def get_order_content_historical(order):
         except Exception as e:
             print(f"Error during HTML fallback: {e}")
 
+    # If both XML and HTML failed
     print(f"Could not retrieve content from XML or HTML for {order.get('title')}")
     return None
 
@@ -160,7 +205,7 @@ def fetch_orders_for_president(president_slug, start_date_str, end_date_str):
         'format': 'json'
     }
 
-    results = fetch_all_pages(FEDERAL_REGISTER_API_URL, params)
+    results = fetch_all_pages(FEDERAL_REGISTER_API_URL, params) # Use imported function
     print(f"Found {len(results)} total orders for {president_name_display}.")
 
     processed_count = 0
@@ -185,10 +230,18 @@ def fetch_orders_for_president(president_slug, start_date_str, end_date_str):
                 continue
 
             date = parser.parse(date_str)
-            # Use the local version for the warning check
-            calculated_president = get_president_by_date_historical(date)
-            if calculated_president != president_slug and calculated_president != "unknown-president":
-                 print(f"  - Warning: Order date {date_str} ({title}) calculates to president '{calculated_president}', expected '{president_slug}'. Saving under '{president_slug}'.")
+            # Use the local version for the check
+            calculated_president = get_president_by_date_historical(date) # Use local function
+
+            # *** Stricter Check: Skip if calculated president doesn't match target slug ***
+            if calculated_president != president_slug:
+                 if calculated_president == "unknown-president":
+                     print(f"  - Warning: Could not determine president for date {date_str} ({title}). Skipping.")
+                 else:
+                     # Skip if the date calculation maps to a different president
+                     print(f"  - Skipping: Order date {date_str} ({title}) calculates to president '{calculated_president}', expected '{president_slug}'.")
+                 skipped_count += 1
+                 continue # Skip processing this result further
 
             if eo_number and not re.match(rf'Executive Order {eo_number}', title, re.IGNORECASE):
                  title = f"Executive Order {eo_number}: {title}"
@@ -200,9 +253,9 @@ def fetch_orders_for_president(president_slug, start_date_str, end_date_str):
             }
 
             # --- File Exists Check --- (uses imported create_markdown_dir, clean_filename)
-            dir_path = create_markdown_dir(order_data['date'], president_slug)
+            dir_path = create_markdown_dir(order_data['date'], president_slug) # Use imported function
             file_date_str = order_data['date'].strftime('%Y-%m-%d')
-            clean_title_part = clean_filename(order_data['title'])
+            clean_title_part = clean_filename(order_data['title']) # Use imported function
             filename = ""
             if order_data.get('eo_number'):
                  filename = f"{file_date_str}-executive-order-{order_data['eo_number']}-{clean_title_part}.md"
@@ -220,11 +273,11 @@ def fetch_orders_for_president(president_slug, start_date_str, end_date_str):
 
             print(f"Processing: {filepath}")
             # Use the local content fetching function with fallback
-            content = get_order_content_historical(order_data)
+            content = get_order_content_historical(order_data) # Use local function
 
             if content:
                 # Uses imported save_as_markdown
-                if save_as_markdown(order_data, content):
+                if save_as_markdown(order_data, content): # Use imported function
                     processed_count += 1
                 else:
                     print(f"Failed to save: {filepath}")

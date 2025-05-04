@@ -1,0 +1,402 @@
+import os
+import sys
+import requests
+from bs4 import BeautifulSoup
+import re
+import time
+from datetime import datetime
+from dateutil import parser
+import json
+import traceback
+
+# Adjust sys.path if run directly
+if __name__ == "__main__" and (__package__ is None or __package__ == ''):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(script_dir)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    __package__ = "src"
+
+# Import helpers from the project
+try:
+    # Try relative imports
+    from .utils import create_markdown_dir, clean_filename, save_as_markdown
+    print("Using relative imports.")
+except (ImportError, SystemError):
+    try:
+        # Try absolute imports
+        from src.utils import create_markdown_dir, clean_filename, save_as_markdown
+        print("Using absolute imports from src.")
+    except ImportError as e:
+        print(f"Error importing modules: {e}")
+        print("Please ensure the script is run from the project root directory.")
+        sys.exit(1)
+
+# Constants
+UCSB_BASE_URL = "https://www.presidency.ucsb.edu"
+UCSB_SEARCH_URL = f"{UCSB_BASE_URL}/advanced-search"
+
+# Presidents dictionary mapping UCSB person IDs to your folder structure slugs
+# The person ID is used in the search URL - UPDATED with correct person IDs from the URLs
+PRESIDENTS_UCSB = {
+    # Format: "your-slug": ("UCSB person ID", "start_date", "end_date", "display_name")
+    "george-h-w-bush": ("200297", "1989-01-20", "1993-01-20", "George H.W. Bush"),
+    "ronald-reagan": ("200296", "1981-01-20", "1989-01-20", "Ronald Reagan"),
+    "jimmy-carter": ("200295", "1977-01-20", "1981-01-20", "Jimmy Carter"),
+    "gerald-r-ford": ("200294", "1974-08-09", "1977-01-20", "Gerald R. Ford"),
+    "richard-nixon": ("200293", "1969-01-20", "1974-08-09", "Richard Nixon"),
+    "lyndon-b-johnson": ("200292", "1963-11-22", "1969-01-20", "Lyndon B. Johnson"),
+    "john-f-kennedy": ("200291", "1961-01-20", "1963-11-22", "John F. Kennedy"),
+    "dwight-d-eisenhower": ("200290", "1953-01-20", "1961-01-20", "Dwight D. Eisenhower"),
+    "harry-s-truman": ("200289", "1945-04-12", "1953-01-20", "Harry S. Truman"),
+    "franklin-d-roosevelt": ("200288", "1933-03-04", "1945-04-12", "Franklin D. Roosevelt"),
+    # Later presidents are better fetched from the Federal Register
+}
+
+def get_headers():
+    """Get headers to mimic a browser request"""
+    return {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': UCSB_BASE_URL,
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+    }
+
+def fetch_orders_for_page(president_slug, person_id, page=0):
+    """
+    Fetch a page of executive orders for a specific president from the UCSB Presidency Project.
+    
+    Args:
+        president_slug: The slug used in your file structure
+        person_id: The UCSB person ID for the president 
+        page: Page number to fetch (0-based for UCSB)
+        
+    Returns:
+        List of orders found on the page
+    """
+    orders = []
+    
+    # Build the search URL with correct parameters based on the provided URLs
+    url = f"{UCSB_SEARCH_URL}?field-keywords=&field-keywords2=&field-keywords3=&from%5Bdate%5D=&to%5Bdate%5D=&person2={person_id}&category2%5B%5D=58&items_per_page=100&page={page}"
+    
+    try:
+        print(f"Fetching page {page+1} for {president_slug}...")
+        print(f"Using URL: {url}")
+        
+        response = requests.get(url, headers=get_headers(), timeout=30)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Debug: Print the title to make sure we're getting a search results page
+        page_title = soup.title.text if soup.title else 'No title'
+        print(f"Page title: {page_title}")
+        
+        # Find search results - use the view-content class which contains the results
+        results = soup.select('div.view-content div.views-row')
+        
+        if not results:
+            print("No results found on this page.")
+            return []
+        
+        print(f"Found {len(results)} results on page {page+1}")
+            
+        for result in results:
+            try:
+                # Extract title and link - adjust selectors based on examining the HTML
+                title_elem = result.select_one('h3.field-content a')
+                if not title_elem:
+                    continue
+                
+                title = title_elem.text.strip()
+                detail_url = title_elem['href']
+                if not detail_url.startswith('http'):
+                    detail_url = f"{UCSB_BASE_URL}{detail_url}"
+                
+                # Extract date - looks for the date display class
+                date_elem = result.select_one('div.date-display-single')
+                if not date_elem:
+                    print(f"  - Warning: No date found for '{title}'")
+                    continue
+                
+                date_text = date_elem.text.strip()
+                try:
+                    date_obj = parser.parse(date_text)
+                except:
+                    print(f"  - Warning: Could not parse date '{date_text}' for '{title}'")
+                    continue
+                
+                # Extract EO number from title
+                eo_number = None
+                eo_match = re.search(r'Executive Order (?:Number )?(\d+)', title, re.IGNORECASE)
+                if eo_match:
+                    eo_number = eo_match.group(1)
+                else:
+                    # Try alternate formats
+                    eo_match = re.search(r'(?:EO|E\.O\.) (?:Number )?(\d+)', title, re.IGNORECASE)
+                    if eo_match:
+                        eo_number = eo_match.group(1)
+                
+                order = {
+                    'title': title,
+                    'date': date_obj,
+                    'link': detail_url,
+                    'eo_number': eo_number
+                }
+                
+                print(f"  - Found order: {title} ({date_obj.strftime('%Y-%m-%d')})")
+                orders.append(order)
+            except Exception as e:
+                print(f"  - Error processing result: {e}")
+                continue
+        
+        return orders
+    
+    except Exception as e:
+        print(f"Error fetching search page {page+1}: {e}")
+        traceback.print_exc()
+        return []
+
+def get_order_content_ucsb(detail_url):
+    """
+    Fetches and extracts the content of an executive order from its detail page.
+    
+    Args:
+        detail_url: URL to the detail page of the executive order
+        
+    Returns:
+        String content of the executive order or None if failed
+    """
+    try:
+        print(f"  - Fetching content from: {detail_url}")
+        response = requests.get(detail_url, headers=get_headers(), timeout=30)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Primary content container in UCSB pages is usually 'div.field-docs-content'
+        # or variations of it like 'div.field--name-field-docs-content'
+        content_div = None
+        
+        # Try specific selectors that match the UCSB site structure
+        selectors = [
+            'div.field-docs-content',
+            'div.field--name-field-docs-content',
+            'div.node__content div.clearfix',
+            'div.field-body',
+            'div.body',
+            'div.node__content',
+            'article .content',
+            'div#document-content',  # Fallback to potential Federal Register style
+            'article'
+        ]
+        
+        for selector in selectors:
+            content_div = soup.select_one(selector)
+            if content_div:
+                print(f"  - Found content using selector: '{selector}'")
+                break
+        
+        if not content_div:
+            print("  - Could not find content section with known selectors")
+            # Last resort: try to find any div with substantial text
+            text_divs = []
+            for div in soup.find_all('div'):
+                text = div.get_text(strip=True)
+                if len(text) > 500:  # Only consider divs with substantial text
+                    text_divs.append((div, len(text)))
+            
+            if text_divs:
+                # Sort by text length, largest first
+                text_divs.sort(key=lambda x: x[1], reverse=True)
+                content_div = text_divs[0][0]
+                print(f"  - Found content using largest text div (size: {text_divs[0][1]} chars)")
+        
+        if not content_div:
+            print("  - Could not find content section")
+            return None
+        
+        # Try to extract structured content like paragraphs and headers
+        # This keeps the document structure better than just getting all text
+        paragraphs = content_div.find_all(['p', 'h2', 'h3', 'h4', 'h5', 'blockquote'])
+        
+        if paragraphs:
+            # Join paragraphs with double newlines to preserve structure
+            content = "\n\n".join(p.get_text().strip() for p in paragraphs)
+        else:
+            # Fallback to getting all text if paragraphs not found
+            content = content_div.get_text(separator='\n\n', strip=True)
+        
+        # Clean up the content
+        content = re.sub(r'\n{3,}', '\n\n', content)  # Remove excess newlines
+        content = re.sub(r'^\s+', '', content, flags=re.MULTILINE)  # Remove leading whitespace
+        
+        # Add special formatting for signature block often found in executive orders
+        signature_match = re.search(r'([A-Z][a-z]+\s+[A-Z]\.\s+[A-Z][a-z]+|[A-Z][a-z]+\s+[A-Z][a-z]+)\s*[,.]?\s*(THE WHITE HOUSE|The White House)[,.]?\s*([\w\s,]+\d{1,2},\s*\d{4}|[\w\s,]+\d{4})', content)
+        if signature_match:
+            signature_part = signature_match.group(0)
+            # Format the signature part with proper spacing
+            formatted_signature = f"\n\n{signature_part}"
+            content = content.replace(signature_part, formatted_signature)
+        
+        return content.strip()
+        
+    except Exception as e:
+        print(f"  - Error fetching order content: {e}")
+        traceback.print_exc()
+        return None
+
+def fetch_all_orders_for_president(president_slug):
+    """
+    Fetches all executive orders for a specific president from UCSB.
+    
+    Args:
+        president_slug: The slug for the president in your file structure
+        
+    Returns:
+        Tuple of (processed_count, skipped_count, error_count)
+    """
+    if president_slug not in PRESIDENTS_UCSB:
+        print(f"Error: President slug '{president_slug}' not found in PRESIDENTS_UCSB dictionary")
+        return (0, 0, 0)
+    
+    person_id, start_date, end_date, display_name = PRESIDENTS_UCSB[president_slug]
+    
+    print(f"\n--- Starting fetch for {display_name} (using UCSB person ID: {person_id}) ---")
+    
+    all_orders = []
+    page = 0
+    page_count = 0
+    
+    # Fetch all pages of results
+    while True:
+        orders = fetch_orders_for_page(president_slug, person_id, page)
+        if not orders:
+            break
+            
+        all_orders.extend(orders)
+        page += 1
+        page_count = page
+        
+        # Be polite to the server
+        time.sleep(2)
+    
+    print(f"Found {len(all_orders)} total orders across {page_count} pages for {display_name}")
+    
+    processed_count = 0
+    skipped_count = 0
+    error_count = 0
+    
+    # Process each order
+    for order in all_orders:
+        try:
+            # Prepare order data
+            title = order['title']
+            date_obj = order['date']
+            link = order['link']
+            eo_number = order.get('eo_number')
+            
+            # Create standard metadata object
+            order_data = {
+                'title': title,
+                'date': date_obj,
+                'link': link,
+                'eo_number': eo_number,
+                # Add other fields to match your expected structure
+                'document_number': None,
+                'pdf_url': None,
+                'xml_url': None,
+                'publication_date': date_obj.strftime('%Y-%m-%d'),
+                'citation': None
+            }
+            
+            # Create directory path
+            dir_path = create_markdown_dir(order_data['date'], president_slug)
+            file_date_str = order_data['date'].strftime('%Y-%m-%d')
+            clean_title_part = clean_filename(order_data['title'])
+            
+            # Create filename
+            if order_data.get('eo_number'):
+                filename = f"{file_date_str}-executive-order-{order_data['eo_number']}-{clean_title_part}.md"
+            else:
+                eo_match = re.match(r'executive order (\d+)', order_data['title'], re.IGNORECASE)
+                if eo_match:
+                    filename = f"{file_date_str}-executive-order-{eo_match.group(1)}-{clean_title_part}.md"
+                else:
+                    filename = f"{file_date_str}-{clean_title_part}.md"
+                
+            filepath = os.path.join(dir_path, filename)
+            
+            # Skip if file exists
+            if os.path.exists(filepath):
+                print(f"  - Skipping (already exists): {filepath}")
+                skipped_count += 1
+                continue
+                
+            print(f"Processing: {filepath}")
+            
+            # Get content
+            content = get_order_content_ucsb(order_data['link'])
+            
+            if content:
+                # Save content as markdown
+                if save_as_markdown(order_data, content):
+                    processed_count += 1
+                    print(f"  - Saved: {filepath}")
+                else:
+                    print(f"  - Error: Failed to save {filepath}")
+                    error_count += 1
+            else:
+                print(f"  - Error: Failed to retrieve content for {title}")
+                error_count += 1
+            
+            # Be polite to the server
+            time.sleep(1)
+            
+        except Exception as e:
+            print(f"Error processing order '{order.get('title', 'Unknown')}': {e}")
+            traceback.print_exc()
+            error_count += 1
+    
+    print(f"--- Finished fetch for {display_name} ---")
+    print(f"Summary: Processed={processed_count}, Skipped={skipped_count}, Errors={error_count}")
+    return (processed_count, skipped_count, error_count)
+            
+def main():
+    """Main function to run when script is executed directly"""
+    print("Starting UCSB Presidency Project fetch for historical presidents...")
+    
+    total_processed = 0
+    total_skipped = 0
+    total_errors = 0
+    
+    # Get command line args if specific presidents provided
+    target_presidents = sys.argv[1:] if len(sys.argv) > 1 else list(PRESIDENTS_UCSB.keys())
+    
+    for president in target_presidents:
+        if president not in PRESIDENTS_UCSB:
+            print(f"Warning: '{president}' is not a valid president slug. Skipping.")
+            continue
+            
+        processed, skipped, errors = fetch_all_orders_for_president(president)
+        total_processed += processed
+        total_skipped += skipped
+        total_errors += errors
+        
+        # Pause before next president
+        if president != target_presidents[-1]:
+            print("\nPausing for 5 seconds before fetching next president...")
+            time.sleep(5)
+    
+    print("\n" + "=" * 50)
+    print("UCSB Presidency Project Fetch Complete!")
+    print(f"Total Processed: {total_processed}")
+    print(f"Total Skipped: {total_skipped}")
+    print(f"Total Errors: {total_errors}")
+    print("=" * 50)
+
+if __name__ == "__main__":
+    main()

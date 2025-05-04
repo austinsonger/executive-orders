@@ -47,6 +47,33 @@ def get_html_content(html_url):
     try:
         print(f"  - Attempting HTML fallback from: {html_url}")
         response = requests.get(html_url, headers=get_headers(), timeout=30)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        content_div = soup.find('div', id='document-content')
+        if not content_div:
+            content_div = soup.find('article')
+            if not content_div:
+                 content_div = soup.find('div', class_='article-content')
+        if not content_div:
+            print("  - HTML Fallback: Could not find main content container.")
+            return None
+
+        full_content = content_div.get_text(separator='\n\n', strip=True)
+        full_content = re.sub(r'\n\s*\n', '\n\n', full_content)
+        full_content = re.sub(r'^\s+', '', full_content, flags=re.MULTILINE)
+        print("  - HTML Fallback successful.")
+        return full_content.strip()
+
+    except Exception as e:
+        print(f"  - Error fetching/parsing HTML content: {str(e)}")
+        return None
+
+def fetch_all_pages(base_url, params):
+    """Fetch all pages of results from the Federal Register API."""
+    all_results = []
+    page = 1
+    total_pages = None
 
     while True:
         params['page'] = page
@@ -80,20 +107,34 @@ def get_html_content(html_url):
     return all_results
 
 def get_order_content(order):
-    """Get the content of an executive order, prioritizing XML if available."""
+    """Get the content of an executive order, prioritizing XML, fallback to HTML."""
+    # Try XML first
     if order.get('xml_url'):
         try:
             print(f"Fetching XML content from: {order['xml_url']}")
-            # Use get_xml_content function defined above
             content = get_xml_content(order['xml_url'])
             if content:
+                print("XML content fetched successfully.")
                 return content
-
+            else:
+                print("XML content fetch returned None.")
         except Exception as e:
             print(f"Error fetching XML content via get_order_content: {e}")
-            # Fall through to return None if XML fails
+            # Fall through to HTML fallback
 
-    print("No XML URL provided or failed to fetch XML content.")
+    # If XML fails or is not available, try HTML
+    print("XML failed or not available. Trying HTML fallback.")
+    if order.get('link'): # 'link' should be the html_url
+        try:
+            html_content = get_html_content(order['link'])
+            if html_content:
+                return html_content
+            else:
+                 print("HTML fallback failed to retrieve content.")
+        except Exception as e:
+            print(f"Error during HTML fallback: {e}")
+
+    print(f"Could not retrieve content from XML or HTML for {order.get('title')}")
     return None
 
 # Note: scrape_historical_orders was in the original file but not used by check_new_orders.
