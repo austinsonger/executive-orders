@@ -30,6 +30,11 @@ jobs:
       run: |
         python scrape_new_orders.py
 
+    - name: Stage new files
+      run: |
+        git add 'Presidential_Executive_Orders/**/*.md'
+
+        
     - name: Update README with current date
       run: |
         current_date=$(date +"%Y-%m-%d")
@@ -38,6 +43,7 @@ jobs:
 
     - name: Commit and push if changes
       run: |
-        git config --local user.email "actions@github.com"
-        git config --local user.name "GitHub Actions"
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update executive orders and README date" && git push)
+       git config --local user.email "actions@github.com"
+       git config --local user.name "GitHub Actions"
+       git add .
+       git diff --quiet && git diff --staged --quiet || (git commit -m "Update executive orders and README date" && git push)
