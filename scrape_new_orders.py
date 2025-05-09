@@ -318,8 +318,11 @@ By the authority\1:''', formatted)
 
 def save_as_markdown(order, content):
     """Save the executive order as a markdown file without creating backups."""
+    # Determine the president based on the date
+    president = get_president_by_date(order['date'])
+    
     # Create directory path using the date
-    dir_path = create_markdown_dir(order['date'], "President_Name")  # Replace "President_Name" with actual president's name
+    dir_path = create_markdown_dir(order['date'], president)
 
     # Create filename from date, EO number, and sanitized title
     date_str = order['date'].strftime('%Y-%m-%d')
