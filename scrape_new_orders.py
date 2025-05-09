@@ -377,9 +377,9 @@ def check_new_orders():
     """Check for new executive orders and process them."""
     print("Starting check for new executive orders...")
 
-    # Calculate the start and end dates for the past 7 days
+    # Calculate the start and end dates for the past 3 days
     today = datetime.now()
-    start_date = today - timedelta(days=7)  # 7 days ago
+    start_date = today - timedelta(days=3)  # 3 days ago
     end_date = today  # Current date and time
     print(f"Fetching orders from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
 
